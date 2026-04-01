@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOLFLIX | Joey Doesn't Share Food</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        netflixRed: '#E50914',
+                        netflixDark: '#141414',
+                        netflixBlack: '#000000',
+                        netflixGray: '#808080',
+                        surface: '#181818',
+                        success: '#2b9348'
+                    },
+                    fontFamily: {
+                        bebas: ['"Bebas Neue"', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            background-color: #141414;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Dynamic Background System */
+        #dynamic-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            opacity: 0.2; z-index: 0; transition: background-image 1s ease-in-out, opacity 1s ease-in-out;
+            pointer-events: none; filter: contrast(1.2) saturate(1.1);
+        }
+        #bg-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(to top, #141414 0%, rgba(20,20,20,0.5) 50%, #141414 100%),
+                        radial-gradient(circle at center, transparent 0%, #141414 100%);
+            z-index: 1; pointer-events: none;
+        }
+
+        /* Step Management */
+        .step-container {
+            display: none; opacity: 0; transition: opacity 0.5s ease;
+            position: relative; z-index: 10; min-height: calc(100vh - 180px);
+            justify-content: center;
+        }
+        .step-container.active {
+            display: flex; opacity: 1; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #141414; }
+        ::-webkit-scrollbar-thumb { background: #E50914; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff0f1a; }
+
+        /* Netflix Style Panels */
+        .glass-panel {
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .netflix-title { font-family: 'Bebas Neue', sans-serif; letter-spacing: 3px; }
+
+        /* Speaking Hub */
+        .speaking-hub {
+            position: relative; background: rgba(0, 0, 0, 0.6);
+            border-left: 6px solid #E50914; border-radius: 0 16px 16px 0;
+            padding: 3rem 2.5rem; margin-top: 2.5rem;
+            box-shadow: inset 0 0 40px rgba(229, 9, 20, 0.05);
+        }
+        .speaking-hub::before {
+            content: '🎙️ SPEAKING HUB'; position: absolute; top: -16px; left: 24px;
+            background: #E50914; color: #FFF; font-weight: 800; font-size: 1rem;
+            letter-spacing: 0.15em; padding: 6px 20px; border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+        }
+        .speaking-starter {
+            display: inline-block; background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15); color: #E5E5E5;
+            padding: 12px 24px; border-radius: 8px; font-size: 1.2rem;
+            margin: 8px; font-style: italic; transition: all 0.3s; cursor: default;
+        }
+        .speaking-starter:hover { border-color: #E50914; background: rgba(229, 9, 20, 0.15); transform: translateX(5px); }
+
+        /* Interactive Elements */
+        .vocab-trigger { color: #E50914; border-bottom: 3px dashed #E50914; cursor: pointer; font-weight: 700; transition: all 0.2s; }
+        .vocab-trigger:hover { color: #FFF; border-bottom-style: solid; text-shadow: 0 0 15px rgba(229, 9, 20, 0.8); }
+
+        .btn-netflix {
+            background-color: #E50914; color: white; font-weight: 800;
+            padding: 18px 40px; border-radius: 8px; transition: all 0.3s; 
+            text-transform: uppercase; letter-spacing: 2px; font-size: 1.3rem;
+            box-shadow: 0 8px 25px rgba(229, 9, 20, 0.3);
+        }
+        .btn-netflix:hover { background-color: #f40612; transform: scale(1.02); box-shadow: 0 12px 35px rgba(229, 9, 20, 0.5); }
+
+        /* Sentence Builder */
+        .sb-word {
+            background: #FFF; color: #141414; font-weight: 800; padding: 14px 28px; border-radius: 8px;
+            cursor: pointer; user-select: none; transition: all 0.2s; border: 3px solid transparent;
+            font-size: 1.4rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .sb-word:hover { transform: translateY(-4px); border-color: #E50914; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+        .sb-dropzone { min-height: 100px; border: 3px dashed rgba(255, 255, 255, 0.3); border-radius: 12px; padding: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; transition: all 0.3s; background: rgba(0,0,0,0.3); }
+        .sb-dropzone.correct { border-color: #2b9348; background: rgba(43, 147, 72, 0.15); }
+        .sb-dropzone.incorrect { border-color: #E50914; background: rgba(229, 9, 20, 0.15); animation: shake 0.4s; }
+
+        /* Interactive Grammar Sandbox */
+        .grammar-btn {
+            background: #222; border: 2px solid #444; color: #FFF; padding: 12px 24px; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-weight: bold; font-size: 1.3rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .grammar-btn:hover { border-color: #E50914; background: rgba(229, 9, 20, 0.15); transform: translateY(-2px); }
+        .grammar-btn.active { background: #E50914; border-color: #E50914; color: #FFF; box-shadow: 0 0 15px rgba(229, 9, 20, 0.6); }
+        
+        .grammar-display {
+            font-size: 3.5rem; font-weight: 800; background: #000; padding: 30px; border-radius: 16px; border: 2px dashed #444; display: flex; justify-content: center; align-items: center; gap: 20px; transition: all 0.3s; flex-wrap: wrap;
+            box-shadow: inset 0 0 30px rgba(255,255,255,0.05);
+        }
+        .grammar-slot { color: #E50914; border-bottom: 5px solid #E50914; padding: 0 15px; transition: all 0.3s; display: inline-block; min-width: 100px; text-align: center; }
+
+        /* Chat Scenarios */
+        .chat-container { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
+        .chat-bubble { max-width: 85%; padding: 16px 24px; border-radius: 20px; font-size: 1.3rem; line-height: 1.5; }
+        .chat-left { background: #222; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .chat-right { background: #E50914; color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 4px 15px rgba(229,9,20,0.3); }
+
+        /* Flip Cards */
+        .arena-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+        .flip-card { background-color: transparent; height: 260px; perspective: 1000px; cursor: pointer; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
+        .flip-card-front { background: rgba(30, 30, 30, 0.95); border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .flip-card-back { background: #E50914; color: #FFF; transform: rotateY(180deg); box-shadow: 0 10px 30px rgba(229,9,20,0.3); }
+
+        /* Sandbox */
+        .sandbox-slot { display: inline-block; min-width: 120px; height: 40px; border-bottom: 3px dashed rgba(255,255,255,0.5); margin: 0 12px; text-align: center; color: #FFF; font-weight: 800; cursor: pointer; transition: all 0.3s; }
+        .sandbox-slot.filled { border-bottom-style: solid; color: #E50914; border-color: #E50914; }
+        .sandbox-word { display: inline-block; background: #222; color: #FFF; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin: 6px; transition: all 0.2s; font-size: 1.3rem; font-weight: bold; border: 2px solid transparent; }
+        .sandbox-word:hover { background: #E50914; transform: translateY(-2px); }
+        .sandbox-word.used { opacity: 0.2; pointer-events: none; }
+
+        /* Error Detection */
+        .error-text span { cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: all 0.2s; font-weight: bold; }
+        .error-text span:hover { background: rgba(255, 255, 255, 0.15); }
+        .error-text span.wrong-clicked { color: #E50914; background: rgba(229, 9, 20, 0.2); }
+        .error-text span.correct-clicked { animation: shake 0.4s; color: #666; }
+
+        /* Sliding Panels */
+        .side-panel { position: fixed; top: 0; right: -100%; width: 100%; max-width: 500px; height: 100vh; background: rgba(15,15,15,0.98); backdrop-filter: blur(20px); border-left: 1px solid #333; z-index: 50; transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; box-shadow: -20px 0 50px rgba(0,0,0,0.9); }
+        .side-panel.open { right: 0; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 40; display: none; opacity: 0; transition: opacity 0.4s; backdrop-filter: blur(5px); }
+        .overlay.active { display: block; opacity: 1; }
+
+        /* General Scaling for Fullscreen */
+        .text-huge { font-size: clamp(3rem, 8vw, 8rem); line-height: 1.1; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col overflow-hidden text-xl">
+
+    <div id="dynamic-bg"></div>
+    <div id="bg-overlay"></div>
+
+    <header class="h-24 flex items-center justify-between px-10 shrink-0 relative z-20 bg-gradient-to-b from-black to-transparent">
+        <div class="flex items-center gap-6">
+            <span class="netflix-title text-4xl md:text-5xl text-netflixRed tracking-widest font-bold">WOLFLIX</span>
+            <span class="px-3 py-1 border border-gray-600 rounded text-xs tracking-widest text-gray-300 uppercase hidden md:block mt-1 font-bold">Series Edition</span>
+        </div>
+
+        <div class="flex-1 max-w-2xl mx-12 hidden lg:block mt-2">
+            <div class="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
+                <div id="progress-bar" class="h-full bg-netflixRed transition-all duration-500 ease-out" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-8">
+            <button onclick="toggleFullscreen()" class="text-gray-300 hover:text-white transition-colors" title="Fullscreen">
+                <i data-lucide="maximize" class="w-7 h-7"></i>
+            </button>
+            <button onclick="toggleWhiteboard()" class="text-gray-300 hover:text-white transition-colors flex items-center gap-3">
+                <i data-lucide="pen-tool" class="w-7 h-7"></i>
+                <span class="hidden sm:inline text-lg font-bold uppercase tracking-wider">Notes</span>
+            </button>
+        </div>
+    </header>
+
+    <main id="lesson-container" class="flex-1 relative overflow-y-auto w-full z-10 px-6 py-10 md:p-16 scroll-smooth">
+        <div class="max-w-6xl mx-auto pb-40">
+
+            <!-- STEP 1 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h1 class="netflix-title text-6xl md:text-8xl text-white mb-4 drop-shadow-lg">Director's Briefing</h1>
+                
+                <div class="glass-panel p-12 space-y-8">
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <span class="bg-netflixRed text-white px-4 py-2 rounded text-lg font-bold tracking-wider uppercase">Level A2</span>
+                        <span class="bg-surface border border-gray-600 text-white px-4 py-2 rounded text-lg font-bold tracking-wider uppercase">Present Simple</span>
+                        <span class="bg-surface border border-gray-600 text-white px-4 py-2 rounded text-lg font-bold tracking-wider uppercase">Past Continuous</span>
+                    </div>
+                    <p class="text-2xl text-gray-300 leading-relaxed">
+                        Welcome to WOLFLIX. Today we watch a legendary scene from the iconic sitcom <strong class="text-white text-3xl font-bold">Friends</strong>. 
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-8 mt-8">
+                        <div class="bg-black/50 p-8 rounded-xl border-l-8 border-netflixRed shadow-lg">
+                            <h3 class="font-bold text-white text-2xl mb-4 flex items-center gap-3"><i data-lucide="tv" class="w-8 h-8 text-netflixRed"></i> The Scene</h3>
+                            <p class="text-gray-300 text-xl leading-relaxed">Joey goes on a date with Sarah. Everything is perfect until she breaks his most sacred, unbreakable rule about eating.</p>
+                        </div>
+                        <div class="bg-black/50 p-8 rounded-xl border-l-8 border-netflixRed shadow-lg">
+                            <h3 class="font-bold text-white text-2xl mb-4 flex items-center gap-3"><i data-lucide="mic" class="w-8 h-8 text-netflixRed"></i> Your Role</h3>
+                            <p class="text-gray-300 text-xl leading-relaxed">You will watch the video and interact with the grammar machines. Speak loudly using the <strong>Speaking Hubs</strong>.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 2 -->
+            <section class="step-container flex-col gap-8 text-center items-center justify-center" data-bg="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80">
+                <p class="text-netflixRed font-bold tracking-[0.4em] uppercase text-xl mb-4 drop-shadow-md">Season 10 • Episode 9</p>
+                <h1 class="netflix-title text-huge text-white drop-shadow-2xl mb-6 leading-none">
+                    JOEY DOESN'T<br><span class="text-netflixRed">SHARE FOOD</span>
+                </h1>
+                <p class="text-3xl text-gray-200 font-light max-w-3xl drop-shadow-lg leading-relaxed">
+                    A tragic story about love, bad dates, and stolen French fries.
+                </p>
+                <div class="mt-16 text-white/60 animate-bounce">
+                    <i data-lucide="chevron-down" class="w-14 h-14"></i>
+                </div>
+            </section>
+
+            <!-- STEP 3 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">The Golden Rule</h2>
+                
+                <div class="glass-panel p-14">
+                    <p class="text-2xl text-gray-200 mb-10 leading-relaxed">Imagine you are at a nice restaurant. You order a delicious, juicy burger and perfect, crispy French fries. Your friend looks at your plate and takes some of your fries without asking.</p>
+                    
+                    <div class="speaking-hub">
+                        <p class="text-white mb-6 font-bold text-2xl">How do you feel? Do you like to share your food with other people?</p>
+                        <div class="flex flex-wrap gap-4">
+                            <span class="speaking-starter">I don't mind! I always share my...</span>
+                            <span class="speaking-starter">I hate it! I never share my...</span>
+                            <span class="speaking-starter">It depends. If it is my boyfriend/girlfriend, I...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 4 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Vocabulary Check</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Click the red words to open the WOLFLIX Dictionary and discover their meaning.</p>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="glass-panel p-12 text-center hover:bg-black/40 transition-colors">
+                        <i data-lucide="utensils" class="w-16 h-16 text-netflixRed mx-auto mb-6"></i>
+                        <p class="text-4xl font-light">Look at my <span class="vocab-trigger" onclick="openDictionary('Plate', 'A flat dish used for eating or serving food.', 'I have a lot of food on my plate.', 'What is usually on your plate for breakfast?')">plate</span>.</p>
+                    </div>
+                    <div class="glass-panel p-12 text-center hover:bg-black/40 transition-colors">
+                        <i data-lucide="pie-chart" class="w-16 h-16 text-netflixRed mx-auto mb-6"></i>
+                        <p class="text-4xl font-light">I like to <span class="vocab-trigger" onclick="openDictionary('Share', 'To give a portion of something to others.', 'She shares her chocolate with me.', 'Do you share secrets with your friends?')">share</span> my pizza.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 5 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Pre-Video Prediction</h2>
+                
+                <div class="glass-panel p-14">
+                    <p class="text-2xl text-gray-200 mb-10 leading-relaxed">Joey is on a date with a beautiful girl named Sarah. They are sitting at a nice restaurant. Her food arrives, but she didn't order much.</p>
+                    
+                    <div class="speaking-hub">
+                        <p class="text-white mb-6 font-bold text-2xl">Predict what will happen in the video.</p>
+                        <div class="flex flex-col gap-4">
+                            <span class="speaking-starter w-fit">I think she will look at his plate and...</span>
+                            <span class="speaking-starter w-fit">Maybe Joey will get angry because...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 6 -->
+            <section class="step-container flex-col gap-8 items-center text-center" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl text-netflixRed mb-4 drop-shadow-md">SCENE 1: The Fries</h2>
+                <p class="text-gray-300 mb-10 text-2xl max-w-4xl leading-relaxed">Watch the first part of the date. Pay close attention to Joey's reaction when Sarah reaches for his plate.</p>
+                
+                <div class="w-full max-w-5xl aspect-video rounded-2xl overflow-hidden border-2 border-gray-800 shadow-[0_20px_50px_rgba(0,0,0,0.9)] bg-black relative">
+                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/hmL6Z9rX8MU?rel=0" title="Joey Doesn't Share Food" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </section>
+
+            <!-- STEP 7 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">What happened?</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Click on the correct summary based on the video.</p>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="glass-panel p-12 hover:border-netflixRed hover:bg-black/50 cursor-pointer transition-all" onclick="checkComp(this, false)">
+                        <p class="text-2xl text-center leading-relaxed">Sarah ordered fries and Joey ate them quickly.</p>
+                    </div>
+                    <div class="glass-panel p-12 hover:border-netflixRed hover:bg-black/50 cursor-pointer transition-all" onclick="checkComp(this, true)">
+                        <p class="text-2xl text-center leading-relaxed">Joey ordered fries and Sarah took some from his plate.</p>
+                    </div>
+                </div>
+                <p id="comp-feedback-1" class="text-center mt-6 font-bold text-3xl h-10"></p>
+            </section>
+
+            <!-- STEP 8 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Discover the Habit Rule</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Look at these sentences about Joey's general habits.</p>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-black/60 p-10 rounded-xl border-l-8 border-netflixRed shadow-lg">
+                        <h4 class="text-gray-400 font-bold mb-4 uppercase tracking-widest text-sm">Sentence A</h4>
+                        <p class="text-3xl text-white font-light">"Joey <strong class="text-netflixRed font-bold">loves</strong> food."</p>
+                    </div>
+                    <div class="bg-black/60 p-10 rounded-xl border-l-8 border-netflixRed shadow-lg">
+                        <h4 class="text-gray-400 font-bold mb-4 uppercase tracking-widest text-sm">Sentence B</h4>
+                        <p class="text-3xl text-white font-light">"Joey <strong class="text-netflixRed font-bold">doesn't share</strong> food."</p>
+                    </div>
+                </div>
+
+                <div class="speaking-hub">
+                    <p class="text-white mb-4 font-bold text-2xl">Question for you:</p>
+                    <p class="text-gray-300 text-xl leading-relaxed">In sentence B, why do we use "doesn't share" instead of "don't share" or "doesn't shares"? What is the rule for He/She/It in the Present Simple?</p>
+                </div>
+            </section>
+
+            <!-- STEP 9 (NEW INTERACTIVE GRAMMAR) -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <div class="inline-flex items-center gap-3 text-netflixRed mb-2">
+                    <i data-lucide="zap" class="w-8 h-8"></i>
+                    <span class="font-bold tracking-widest text-xl uppercase">Interactive Sandbox</span>
+                </div>
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">The Habit Machine</h2>
+                
+                <div class="glass-panel p-14">
+                    <p class="text-2xl text-gray-200 mb-10 leading-relaxed">We use the Present Simple to talk about habits and facts. Let's build the negative rule together. <strong>Click the subjects below</strong> and watch how the machine builds the sentence.</p>
+                    
+                    <div class="flex flex-wrap justify-center gap-4 mb-12">
+                        <button class="grammar-btn present-btn" onclick="updatePresent('I', 'don\'t')">I</button>
+                        <button class="grammar-btn present-btn" onclick="updatePresent('Joey (He)', 'doesn\'t')">Joey (He)</button>
+                        <button class="grammar-btn present-btn" onclick="updatePresent('Sarah (She)', 'doesn\'t')">Sarah (She)</button>
+                        <button class="grammar-btn present-btn" onclick="updatePresent('We', 'don\'t')">We</button>
+                        <button class="grammar-btn present-btn" onclick="updatePresent('They', 'don\'t')">They</button>
+                    </div>
+
+                    <div class="grammar-display mb-10">
+                        <span id="ps-subj" class="text-white">___</span>
+                        <span id="ps-aux" class="grammar-slot border-gray-500 text-gray-500">___</span>
+                        <span class="text-white">share food.</span>
+                    </div>
+
+                    <div class="bg-black/50 p-10 rounded-xl border border-gray-700 shadow-md text-center min-h-[160px] flex items-center justify-center">
+                        <p id="ps-explanation" class="text-2xl text-gray-400 font-light italic">Select a subject above to see the rule.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 10 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Build the Catchphrase</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Unscramble the blocks below to build Joey's most famous rule.</p>
+
+                <div class="glass-panel p-14 max-w-4xl mx-auto w-full">
+                    <div id="dropzone-1" class="sb-dropzone mb-10" ondragover="event.preventDefault()"></div>
+                    
+                    <div id="wordbank-1" class="flex flex-wrap justify-center gap-6 mb-10">
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-1', 'wordbank-1')">food</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-1', 'wordbank-1')">Joey</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-1', 'wordbank-1')">share</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-1', 'wordbank-1')">doesn't</div>
+                    </div>
+
+                    <button onclick="checkSentenceBuilder('dropzone-1', ['Joey', 'doesn\'t', 'share', 'food'])" class="btn-netflix w-full text-2xl">Check Syntax</button>
+                    <p id="sb-feedback-1" class="text-center mt-6 hidden font-bold text-2xl"></p>
+                </div>
+            </section>
+
+            <!-- STEP 11 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <div class="inline-flex items-center gap-3 text-netflixRed mb-2">
+                    <i data-lucide="eye" class="w-8 h-8"></i>
+                    <span class="font-bold tracking-widest text-xl uppercase">Setting the Scene</span>
+                </div>
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">What was happening?</h2>
+                
+                <div class="glass-panel p-14">
+                    <p class="text-2xl text-gray-200 mb-8 leading-relaxed">Let's rewind the date. Before the problem started, both characters were doing something.</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="bg-black/60 p-8 rounded-xl border-l-8 border-gray-500">
+                            <p class="text-2xl text-white font-light">"Joey <strong class="text-netflixRed">was eating</strong> his delicious burger."</p>
+                        </div>
+                        <div class="bg-black/60 p-8 rounded-xl border-l-8 border-gray-500">
+                            <p class="text-2xl text-white font-light">"Sarah <strong class="text-netflixRed">was talking</strong> about her day."</p>
+                        </div>
+                    </div>
+
+                    <div class="speaking-hub">
+                        <p class="text-white mb-4 font-bold text-2xl">Discussion:</p>
+                        <p class="text-gray-300 text-xl leading-relaxed">Look at the verbs <strong class="text-white">"was eating"</strong> and <strong class="text-white">"was talking"</strong>. Are these actions finished, or were they in progress during the date?</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 12 (NEW INTERACTIVE GRAMMAR) -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <div class="inline-flex items-center gap-3 text-netflixRed mb-2">
+                    <i data-lucide="video" class="w-8 h-8"></i>
+                    <span class="font-bold tracking-widest text-xl uppercase">Interactive Sandbox</span>
+                </div>
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">The Scene Builder</h2>
+                
+                <div class="glass-panel p-14">
+                    <p class="text-2xl text-gray-200 mb-10 leading-relaxed">The <strong class="text-white font-bold">Past Continuous</strong> describes a long action in progress in the past. Change the subject or the verb to see how the "Time Machine" adapts.</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-10 mb-12">
+                        <div class="bg-black/40 p-8 rounded-xl border border-gray-700 flex flex-col gap-6 shadow-inner">
+                            <h4 class="text-gray-400 font-bold uppercase tracking-widest text-sm mb-2 text-center">1. Choose Subject</h4>
+                            <div class="flex flex-wrap justify-center gap-4">
+                                <button class="grammar-btn past-subj-btn" onclick="updatePastSubj('I', 'was')">I</button>
+                                <button class="grammar-btn past-subj-btn" onclick="updatePastSubj('Joey (He)', 'was')">Joey</button>
+                                <button class="grammar-btn past-subj-btn" onclick="updatePastSubj('You', 'were')">You</button>
+                                <button class="grammar-btn past-subj-btn" onclick="updatePastSubj('They', 'were')">They</button>
+                            </div>
+                        </div>
+                        <div class="bg-black/40 p-8 rounded-xl border border-gray-700 flex flex-col gap-6 shadow-inner">
+                            <h4 class="text-gray-400 font-bold uppercase tracking-widest text-sm mb-2 text-center">2. Choose Action</h4>
+                            <div class="flex flex-wrap justify-center gap-4">
+                                <button class="grammar-btn past-verb-btn" onclick="updatePastVerb('eat')">Eat</button>
+                                <button class="grammar-btn past-verb-btn" onclick="updatePastVerb('look')">Look</button>
+                                <button class="grammar-btn past-verb-btn" onclick="updatePastVerb('talk')">Talk</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grammar-display mb-10 text-[3.5rem]">
+                        <span id="pc-subj" class="text-white">___</span>
+                        <span id="pc-aux" class="grammar-slot text-gray-500 border-gray-500 transition-all duration-300">___</span>
+                        <span id="pc-verb" class="grammar-slot text-gray-500 border-gray-500 transition-all duration-300">___<span class="text-white font-black bg-gray-700 px-2 rounded-xl ml-2 text-3xl" id="pc-ing">ing</span></span>
+                    </div>
+
+                    <div class="bg-black/50 p-10 rounded-xl border border-gray-700 shadow-md text-center min-h-[140px] flex items-center justify-center transition-colors duration-300" id="pc-expl-container">
+                        <p id="pc-explanation" class="text-2xl text-gray-400 font-light italic">Click the buttons above to build the background scene!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 13 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">The Interruption</h2>
+                
+                <div class="glass-panel p-14">
+                    <p class="text-2xl text-gray-200 mb-8 leading-relaxed">We often use the <strong class="text-white">Past Continuous</strong> (long action) together with the <strong class="text-white">Past Simple</strong> (short action) to show that one action interrupted another.</p>
+                    
+                    <div class="bg-black/60 p-10 rounded-xl border-l-8 border-netflixRed shadow-lg mb-10">
+                        <p class="text-3xl text-white font-light leading-relaxed">
+                            "Joey <strong class="text-gray-400 border-b-2 border-gray-400">was looking</strong> at the waiter <span class="text-netflixRed font-bold uppercase text-lg mx-2">WHEN</span> Sarah <strong class="text-white border-b-2 border-white">took</strong> his fries."
+                        </p>
+                    </div>
+
+                    <div class="speaking-hub">
+                        <p class="text-white mb-6 font-bold text-2xl">Complete the idea aloud:</p>
+                        <div class="flex flex-col gap-4">
+                            <span class="speaking-starter w-fit">Joey was eating his fries when Sarah...</span>
+                            <span class="speaking-starter w-fit">They were talking when the waiter...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 14 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Build the Scene</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Unscramble the words to describe the background action in the restaurant.</p>
+
+                <div class="glass-panel p-14 max-w-4xl mx-auto w-full">
+                    <div id="dropzone-2" class="sb-dropzone mb-10" ondragover="event.preventDefault()"></div>
+                    
+                    <div id="wordbank-2" class="flex flex-wrap justify-center gap-6 mb-10">
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-2', 'wordbank-2')">salad</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-2', 'wordbank-2')">Sarah</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-2', 'wordbank-2')">her</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-2', 'wordbank-2')">eating</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-2', 'wordbank-2')">was</div>
+                    </div>
+
+                    <button onclick="checkSentenceBuilder('dropzone-2', ['Sarah', 'was', 'eating', 'her', 'salad'])" class="btn-netflix w-full text-2xl">Check Syntax</button>
+                    <p id="sb-feedback-2" class="text-center mt-6 hidden font-bold text-2xl"></p>
+                </div>
+            </section>
+
+            <!-- STEP 15 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Joey texts Chandler</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Joey is angry and sends a message to his best friend Chandler from the bathroom.</p>
+
+                <div class="glass-panel p-8 chat-container mx-auto w-full max-w-2xl bg-black">
+                    <div class="chat-bubble chat-right">
+                        Dude! This date is a disaster. She is eating all my food!
+                    </div>
+                    <div class="chat-bubble chat-left">
+                        What? Didn't she order her own food?
+                    </div>
+                    <div class="chat-bubble chat-right">
+                        She ordered a tiny salad. I was enjoying my burger when suddenly, BAM, her hand was on my plate!
+                    </div>
+                    <div class="chat-bubble chat-left">
+                        Remember the rule, man. Joey doesn't share food. Tell her!
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 16 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <div class="inline-flex items-center gap-3 text-netflixRed mb-2">
+                    <i data-lucide="alert-circle" class="w-8 h-8"></i>
+                    <span class="font-bold tracking-widest text-xl uppercase">Error Detection</span>
+                </div>
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Fix the Mistake</h2>
+                <p class="text-gray-300 mb-10 text-2xl">Click on the grammatically INCORRECT word in the sentence below.</p>
+
+                <div class="glass-panel p-16 text-center text-4xl font-bold leading-loose error-text max-w-4xl mx-auto w-full">
+                    "Joey <span onclick="checkError(this, false)">was</span> <span onclick="checkError(this, true, 'looking')" class="wrong-target">look</span> away when she <span onclick="checkError(this, false)">took</span> the cake."
+                </div>
+                <p id="error-feedback-1" class="text-center mt-8 text-gray-400 text-2xl h-10"></p>
+
+                <div class="speaking-hub hidden max-w-4xl mx-auto w-full" id="hub-after-error">
+                    <p class="text-white mb-4 text-2xl font-bold">Why is it "looking"?</p>
+                    <span class="speaking-starter w-fit">Because in the Past Continuous, we need the verb 'to be' plus the verb with...</span>
+                </div>
+            </section>
+
+            <!-- STEP 17 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Double Standards?</h2>
+                
+                <div class="glass-panel p-14">
+                    <p class="text-2xl text-gray-200 mb-10 leading-relaxed">Later in the episode, Joey goes to the bathroom. Sarah's delicious chocolate dessert arrives while he is gone. When she is not looking, Joey eats her dessert very fast!</p>
+                    
+                    <div class="speaking-hub">
+                        <p class="text-white mb-6 font-bold text-2xl">Discuss: Joey doesn't share his food, but he eats her food. Is he a hypocrite or just funny?</p>
+                        <div class="flex flex-col gap-4">
+                            <span class="speaking-starter w-fit">I think he is a huge hypocrite because he...</span>
+                            <span class="speaking-starter w-fit">It's just funny for the TV show because Joey is always...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 18 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Stuffed vs Hungry</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="glass-panel p-12 text-center border-t-8 border-netflixRed hover:bg-black/40 transition-colors">
+                        <p class="text-4xl mb-6 font-bold">"I'm <span class="vocab-trigger" onclick="openDictionary('Stuffed', 'Completely full; not wanting to eat anymore.', 'I ate two pizzas, I am stuffed.', 'When was the last time you felt stuffed?')">stuffed</span>."</p>
+                        <p class="text-gray-400 text-xl leading-relaxed">Meaning: I cannot eat one more bite. I am completely full.</p>
+                    </div>
+                    <div class="glass-panel p-12 text-center border-t-8 border-gray-600 hover:bg-black/40 transition-colors">
+                        <p class="text-4xl mb-6 font-bold">"I'm <span class="vocab-trigger" onclick="openDictionary('Hungry', 'Feeling a need or desire for food.', 'I am so hungry I could eat a horse.', 'What do you eat when you are very hungry?')">hungry</span>."</p>
+                        <p class="text-gray-400 text-xl leading-relaxed">Meaning: My stomach is empty. I want to eat right now.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 19 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">The Arena: Debate</h2>
+                <p class="text-gray-300 mb-10 text-2xl">Click the card and debate the question fiercely with your teacher.</p>
+
+                <div class="arena-grid max-w-3xl mx-auto w-full">
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <i data-lucide="swords" class="w-16 h-16 text-netflixRed mb-6"></i>
+                                <h3 class="font-bold text-white text-3xl uppercase tracking-widest">Debate 1</h3>
+                            </div>
+                            <div class="flip-card-back">
+                                <p class="text-2xl font-medium px-8 leading-relaxed">"If someone clearly says they are NOT hungry, do they forever lose the right to eat a single fry from your plate?"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 20 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">The Arena: Debate 2</h2>
+
+                <div class="arena-grid max-w-3xl mx-auto w-full">
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <i data-lucide="swords" class="w-16 h-16 text-netflixRed mb-6"></i>
+                                <h3 class="font-bold text-white text-3xl uppercase tracking-widest">Debate 2</h3>
+                            </div>
+                            <div class="flip-card-back">
+                                <p class="text-2xl font-medium px-8 leading-relaxed">"Is it acceptable to order extra food on a date *just in case* your partner decides they want some?"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 21 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Negative Habits Review</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Let's review the Present Simple negative. Create a sentence about what Sarah DOES NOT do.</p>
+
+                <div class="glass-panel p-14 max-w-4xl mx-auto w-full">
+                    <div id="dropzone-3" class="sb-dropzone mb-10"></div>
+                    
+                    <div id="wordbank-3" class="flex flex-wrap justify-center gap-6 mb-10">
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-3', 'wordbank-3')">dessert</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-3', 'wordbank-3')">her</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-3', 'wordbank-3')">order</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-3', 'wordbank-3')">Sarah</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-3', 'wordbank-3')">doesn't</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-3', 'wordbank-3')">own</div>
+                    </div>
+
+                    <button onclick="checkSentenceBuilder('dropzone-3', ['Sarah', 'doesn\'t', 'order', 'her', 'own', 'dessert'])" class="btn-netflix w-full text-2xl">Check Syntax</button>
+                    <p id="sb-feedback-3" class="text-center mt-6 hidden font-bold text-2xl"></p>
+                </div>
+            </section>
+
+            <!-- STEP 22 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <div class="inline-flex items-center gap-3 text-netflixRed mb-2">
+                    <i data-lucide="mouse-pointer-click" class="w-8 h-8"></i>
+                    <span class="font-bold tracking-widest text-xl uppercase">Interactive Sandbox</span>
+                </div>
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Grammar Master Challenge</h2>
+                <p class="text-gray-300 mb-10 text-2xl">Click a word from the bank, then click the line to fill in the blanks. Combine your knowledge of habits (Present Simple) and past progress (Past Continuous).</p>
+
+                <div class="glass-panel p-16 max-w-6xl mx-auto w-full">
+                    
+                    <div class="bg-black/60 p-10 rounded-xl text-3xl leading-loose font-medium text-gray-200 mb-12 shadow-inner border border-gray-800" id="sandbox-paragraph">
+                        "Joey <span class="sandbox-slot" onclick="selectSlot(this)" data-correct="doesn't share">___</span> his food. It's his golden rule. During the date, Joey <span class="sandbox-slot" onclick="selectSlot(this)" data-correct="was eating">___</span> his fries when Sarah suddenly <span class="sandbox-slot" onclick="selectSlot(this)" data-correct="took">___</span> some. Later, Sarah <span class="sandbox-slot" onclick="selectSlot(this)" data-correct="was looking">___</span> away when Joey ate her cake."
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-4 mb-10" id="sandbox-wordbank">
+                        <div class="sandbox-word" onclick="selectWord(this)">was eating</div>
+                        <div class="sandbox-word" onclick="selectWord(this)">took</div>
+                        <div class="sandbox-word" onclick="selectWord(this)">doesn't share</div>
+                        <div class="sandbox-word" onclick="selectWord(this)">was looking</div>
+                        <div class="sandbox-word" onclick="selectWord(this)">take</div>
+                        <div class="sandbox-word" onclick="selectWord(this)">don't share</div>
+                    </div>
+
+                    <button onclick="checkSandbox()" class="btn-netflix w-full text-2xl">Verify Summary</button>
+                    <p id="sandbox-feedback" class="text-center mt-8 hidden font-bold text-2xl h-10"></p>
+                </div>
+            </section>
+
+            <!-- STEP 23 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <div class="inline-flex items-center gap-3 text-netflixRed mb-2">
+                    <i data-lucide="help-circle" class="w-8 h-8"></i>
+                    <span class="font-bold tracking-widest text-xl uppercase">Where do you stand?</span>
+                </div>
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Dating Etiquette</h2>
+                <p class="text-gray-300 mb-10 text-2xl max-w-4xl text-center mx-auto">Read the modern dating dilemmas below. Where do you stand on these restaurant rules? Discuss your opinion with your teacher.</p>
+
+                <div class="grid lg:grid-cols-3 gap-8 w-full max-w-6xl mx-auto">
+                    <!-- Dilemma 1 -->
+                    <div class="glass-panel p-10 flex flex-col justify-between border-t-8 border-netflixRed hover:-translate-y-3 transition-transform duration-300 shadow-lg">
+                        <div>
+                            <h3 class="font-bold text-white text-3xl mb-6 uppercase tracking-widest flex items-center gap-3">
+                                <i data-lucide="credit-card" class="text-netflixRed"></i> 1. The Bill
+                            </h3>
+                            <p class="text-gray-300 text-2xl leading-relaxed mb-8">You are on a first date. The dinner was amazing, but now the waiter brings the expensive bill to the table.</p>
+                        </div>
+                        <div class="bg-black/60 p-8 rounded-xl mt-auto border border-gray-800">
+                            <p class="text-netflixRed font-bold mb-4 text-xl uppercase tracking-wider">What do you do?</p>
+                            <ul class="text-gray-400 text-xl space-y-4">
+                                <li class="hover:text-white transition-colors cursor-pointer">A) The man always pays.</li>
+                                <li class="hover:text-white transition-colors cursor-pointer">B) Split it 50/50.</li>
+                                <li class="hover:text-white transition-colors cursor-pointer">C) The person who invited pays.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Dilemma 2 -->
+                    <div class="glass-panel p-10 flex flex-col justify-between border-t-8 border-gray-500 hover:-translate-y-3 transition-transform duration-300 shadow-lg">
+                        <div>
+                            <h3 class="font-bold text-white text-3xl mb-6 uppercase tracking-widest flex items-center gap-3">
+                                <i data-lucide="smartphone" class="text-gray-400"></i> 2. The Phone
+                            </h3>
+                            <p class="text-gray-300 text-2xl leading-relaxed mb-8">Your date's phone rings. They look at it and start texting a friend for 5 minutes while you wait.</p>
+                        </div>
+                        <div class="bg-black/60 p-8 rounded-xl mt-auto border border-gray-800">
+                            <p class="text-gray-400 font-bold mb-4 text-xl uppercase tracking-wider">How do you react?</p>
+                            <ul class="text-gray-400 text-xl space-y-4">
+                                <li class="hover:text-white transition-colors cursor-pointer">A) Say nothing. Be patient.</li>
+                                <li class="hover:text-white transition-colors cursor-pointer">B) Use your phone too.</li>
+                                <li class="hover:text-white transition-colors cursor-pointer">C) Say: "Is everything okay?"</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Dilemma 3 -->
+                    <div class="glass-panel p-10 flex flex-col justify-between border-t-8 border-netflixRed hover:-translate-y-3 transition-transform duration-300 shadow-lg">
+                        <div>
+                            <h3 class="font-bold text-white text-3xl mb-6 uppercase tracking-widest flex items-center gap-3">
+                                <i data-lucide="cake" class="text-netflixRed"></i> 3. The Taste
+                            </h3>
+                            <p class="text-gray-300 text-2xl leading-relaxed mb-8">Your date's chocolate dessert looks amazing. You really want to try it, but they didn't offer you a bite.</p>
+                        </div>
+                        <div class="bg-black/60 p-8 rounded-xl mt-auto border border-gray-800">
+                            <p class="text-netflixRed font-bold mb-4 text-xl uppercase tracking-wider">What do you do?</p>
+                            <ul class="text-gray-400 text-xl space-y-4">
+                                <li class="hover:text-white transition-colors cursor-pointer">A) Ask politely for a bite.</li>
+                                <li class="hover:text-white transition-colors cursor-pointer">B) Just take a spoon (like Sarah).</li>
+                                <li class="hover:text-white transition-colors cursor-pointer">C) Order your own dessert.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 24 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6 text-center">Fact Check</h2>
+                <p class="text-gray-300 mb-10 text-2xl text-center">Is this statement True or False according to the lesson?</p>
+
+                <div class="glass-panel p-16 text-center max-w-4xl mx-auto w-full">
+                    <p class="text-4xl text-white mb-12 font-light leading-relaxed">"Joey has strict principles. He never eats other people's food; he only rigorously protects his own plate."</p>
+                    
+                    <div class="flex justify-center gap-8">
+                        <button onclick="checkFact(this, true)" class="px-12 py-5 bg-surface border-2 border-gray-600 hover:bg-gray-700 hover:border-gray-500 rounded-lg font-bold transition-all uppercase text-2xl">True</button>
+                        <button onclick="checkFact(this, false)" class="px-12 py-5 bg-netflixRed hover:bg-red-700 rounded-lg text-white font-bold transition-all uppercase text-2xl shadow-[0_0_20px_rgba(229,9,20,0.4)]">False</button>
+                    </div>
+                    <p id="fact-feedback" class="mt-10 text-2xl h-10 font-bold"></p>
+                </div>
+            </section>
+
+            <!-- STEP 25 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <div class="inline-flex items-center gap-3 text-netflixRed mb-2">
+                    <i data-lucide="link" class="w-8 h-8"></i>
+                    <span class="font-bold tracking-widest text-xl uppercase">Knowledge Check</span>
+                </div>
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Who did what?</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Discuss with your teacher to connect the action to the person.</p>
+
+                <div class="grid md:grid-cols-2 gap-6 text-xl max-w-5xl mx-auto w-full">
+                    <div class="space-y-6">
+                        <div class="glass-panel p-8 text-center text-netflixRed font-bold uppercase text-3xl">A. Joey</div>
+                        <div class="glass-panel p-8 text-center text-netflixRed font-bold uppercase text-3xl">B. Sarah</div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="glass-panel p-8 text-gray-200">1. Ordered a side salad.</div>
+                        <div class="glass-panel p-8 text-gray-200">2. Ate the other person's dessert fast.</div>
+                        <div class="glass-panel p-8 text-gray-200">3. Took a few french fries without asking.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 26 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Friends & Quirks</h2>
+                
+                <div class="glass-panel p-14">
+                    <p class="text-2xl text-gray-200 mb-10 leading-relaxed">Joey has a very weird rule, but his friends love him anyway. Everyone has strange habits or rules (quirks).</p>
+                    
+                    <div class="speaking-hub">
+                        <p class="text-white mb-6 font-bold text-2xl">Do you have a strange rule about your food, your room, or your personal things?</p>
+                        <div class="flex flex-col gap-4">
+                            <span class="speaking-starter w-fit">I have a strict rule: nobody can touch my...</span>
+                            <span class="speaking-starter w-fit">I really don't like it when people use my...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 27 -->
+            <section class="step-container flex-col gap-8" data-bg="">
+                <h2 class="netflix-title text-6xl md:text-7xl mb-6">Final Grammar Check</h2>
+                <p class="text-gray-300 mb-8 text-2xl">Build a correct negative sentence using 'They' to summarize the scene.</p>
+
+                <div class="glass-panel p-14 max-w-4xl mx-auto w-full">
+                    <div id="dropzone-4" class="sb-dropzone mb-10"></div>
+                    
+                    <div id="wordbank-4" class="flex flex-wrap justify-center gap-6 mb-10">
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-4', 'wordbank-4')">food</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-4', 'wordbank-4')">share</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-4', 'wordbank-4')">They</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-4', 'wordbank-4')">don't</div>
+                        <div class="sb-word" onclick="moveWord(this, 'dropzone-4', 'wordbank-4')">their</div>
+                    </div>
+
+                    <button onclick="checkSentenceBuilder('dropzone-4', ['They', 'don\'t', 'share', 'their', 'food'])" class="btn-netflix w-full text-2xl">Check Answer</button>
+                    <p id="sb-feedback-4" class="text-center mt-6 hidden font-bold text-2xl"></p>
+                </div>
+            </section>
+
+            <!-- STEP 28 -->
+            <section class="step-container flex-col gap-8 text-center" data-bg="">
+                <h2 class="netflix-title text-huge text-netflixRed mb-8 drop-shadow-xl">The Final Scene</h2>
+                
+                <div class="glass-panel p-16 max-w-4xl mx-auto border-t-8 border-netflixRed shadow-[0_20px_60px_rgba(229,9,20,0.15)]">
+                    <i data-lucide="pizza" class="w-20 h-20 text-white mx-auto mb-10"></i>
+                    <p class="text-4xl text-white font-light leading-relaxed mb-12">
+                        "What is your absolute favorite food, the one thing that you would <strong class="text-netflixRed font-bold">never</strong> share with anyone?"
+                    </p>
+                    <p class="text-lg text-gray-500 uppercase tracking-widest font-bold">Open the whiteboard and write it down.</p>
+                </div>
+            </section>
+
+            <!-- STEP 29 -->
+            <section class="step-container flex-col gap-8 items-center text-center justify-center" data-bg="">
+                <h2 class="netflix-title text-[8rem] text-netflixRed mb-4 drop-shadow-2xl leading-none">Episode Complete</h2>
+                <p class="text-2xl text-gray-400 mb-14 uppercase tracking-[0.3em] font-bold">Next Episode plays in 5...</p>
+                
+                <div class="glass-panel p-14 max-w-3xl w-full border border-gray-700">
+                    <h3 class="font-bold text-white mb-8 text-3xl uppercase tracking-wider">Homework Suggestion</h3>
+                    
+                    <div class="bg-black/60 p-8 rounded-xl text-left mb-10 border-l-8 border-netflixRed shadow-inner">
+                        <ul class="text-gray-300 space-y-5 text-2xl leading-relaxed">
+                            <li><strong class="text-netflixRed">•</strong> Write 3 sentences about things you <strong>don't share</strong>.</li>
+                            <li><strong class="text-netflixRed">•</strong> Write 2 sentences about what you <strong>were doing</strong> yesterday at 8 PM.</li>
+                        </ul>
+                    </div>
+
+                    <button onclick="alert('Episode complete. Returning to WOLFLIX menu.')" class="btn-netflix w-full flex items-center justify-center gap-4 py-6 text-3xl">
+                        <i data-lucide="play" class="w-8 h-8 fill-current"></i>
+                        Finish Lesson
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="h-28 bg-black/95 border-t border-gray-800 flex justify-between items-center px-10 shrink-0 relative z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+        <button id="btn-prev" onclick="prevStep()" class="px-8 py-4 border-2 border-gray-600 text-white hover:border-white hover:bg-white/5 transition-all rounded-lg uppercase font-bold text-lg tracking-widest disabled:opacity-20 flex items-center gap-3">
+            <i data-lucide="chevron-left" class="w-6 h-6"></i> Back
+        </button>
+        
+        <div class="text-lg text-gray-400 font-bold tracking-widest uppercase hidden sm:block">
+            Scene <span id="current-step-display" class="text-white text-xl mx-2">1</span> / 29
+        </div>
+
+        <button id="btn-next" onclick="nextStep()" class="px-8 py-4 bg-netflixRed text-white hover:bg-red-700 transition-all rounded-lg uppercase font-bold text-lg tracking-widest disabled:opacity-20 flex items-center gap-3 shadow-[0_0_15px_rgba(229,9,20,0.4)] hover:shadow-[0_0_25px_rgba(229,9,20,0.6)]">
+            Next <i data-lucide="chevron-right" class="w-6 h-6"></i>
+        </button>
+    </footer>
+
+    <div id="overlay" class="overlay" onclick="closePanels()"></div>
+
+    <div id="dict-panel" class="side-panel p-10">
+        <div class="flex justify-between items-center mb-10 pb-6 border-b border-gray-800">
+            <h3 class="font-bold text-2xl text-white uppercase tracking-widest">Word Info</h3>
+            <button onclick="closePanels()" class="text-gray-400 hover:text-white bg-surface p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-8 h-8"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-8 flex-1 overflow-y-auto">
+            <div>
+                <p id="dict-word" class="netflix-title text-6xl text-netflixRed mb-4 tracking-widest">Word</p>
+                <p id="dict-def" class="text-gray-300 text-2xl leading-relaxed">Definition goes here.</p>
+            </div>
+            <div class="bg-black/50 p-6 rounded-xl border-l-4 border-gray-600">
+                <p class="text-sm text-gray-500 uppercase tracking-widest mb-3 font-bold">Example in context</p>
+                <p id="dict-ex" class="text-gray-200 italic text-xl">"Example text."</p>
+            </div>
+            <div class="speaking-hub !mt-6 !p-8 !border-l-4">
+                <p id="dict-prompt" class="text-white text-xl font-bold leading-relaxed">Prompt text.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="whiteboard-panel" class="side-panel p-10 flex flex-col">
+        <div class="flex justify-between items-center mb-6 pb-6 border-b border-gray-800">
+            <h3 class="font-bold text-2xl text-white uppercase tracking-widest flex items-center gap-3">
+                <i data-lucide="clapperboard" class="w-8 h-8 text-netflixRed"></i> Director's Notes
+            </h3>
+            <button onclick="closePanels()" class="text-gray-400 hover:text-white bg-surface p-2 rounded-full transition-colors">
+                <i data-lucide="x" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- NEW: Whiteboard Interactive Toolbar -->
+        <div class="flex gap-2 mb-6 bg-black/80 p-2 rounded-lg border border-gray-800 shadow-md">
+            <button onclick="addNoteTimestamp()" class="flex-1 flex items-center justify-center gap-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 py-2 rounded transition-colors font-bold" title="Insert Scene Tag">
+                <i data-lucide="tag" class="w-4 h-4"></i> Tag Scene
+            </button>
+            <div class="w-px bg-gray-700 my-1"></div>
+            <button onclick="clearWhiteboard()" class="flex-1 flex items-center justify-center gap-2 text-sm text-gray-300 hover:text-netflixRed hover:bg-red-900/20 py-2 rounded transition-colors font-bold" title="Clear Notes">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Clear
+            </button>
+            <div class="w-px bg-gray-700 my-1"></div>
+            <button onclick="downloadNotes()" class="flex-1 flex items-center justify-center gap-2 text-sm text-white bg-netflixRed hover:bg-red-700 py-2 rounded transition-colors font-bold tracking-wider shadow-[0_0_15px_rgba(229,9,20,0.4)]" title="Download as TXT">
+                <i data-lucide="download" class="w-4 h-4"></i> Save
+            </button>
+        </div>
+
+        <!-- NEW: Premium Glow Wrapper for Text Area -->
+        <div class="flex-1 relative group flex flex-col">
+            <div class="absolute -inset-1 bg-gradient-to-b from-netflixRed to-transparent opacity-0 group-focus-within:opacity-20 rounded-xl transition-opacity duration-500 blur-md pointer-events-none"></div>
+            <textarea id="whiteboard-textarea" class="relative flex-1 w-full bg-black/60 text-gray-200 resize-none outline-none border border-gray-700 p-6 rounded-xl focus:border-netflixRed transition-all font-mono text-xl leading-relaxed shadow-inner" placeholder="Type your lesson notes, vocabulary, or corrections here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- Navigation Logic ---
+        let currentStep = 0;
+        const steps = document.querySelectorAll('.step-container');
+        const totalSteps = steps.length;
+        const progressBar = document.getElementById('progress-bar');
+        const stepDisplay = document.getElementById('current-step-display');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const dynamicBg = document.getElementById('dynamic-bg');
+
+        function updateUI() {
+            steps.forEach((step, index) => {
+                if(index === currentStep) {
+                    step.classList.add('active');
+                    const bgUrl = step.getAttribute('data-bg');
+                    if(bgUrl) {
+                        dynamicBg.style.backgroundImage = `url('${bgUrl}')`;
+                        dynamicBg.style.opacity = "0.2";
+                    } else {
+                        dynamicBg.style.opacity = "0";
+                    }
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+
+            const progressPercentage = ((currentStep) / (totalSteps - 1)) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+            stepDisplay.innerText = currentStep + 1;
+
+            btnPrev.disabled = currentStep === 0;
+            btnNext.style.display = currentStep === totalSteps - 1 ? 'none' : 'flex';
+
+            document.getElementById('lesson-container').scrollTop = 0;
+        }
+
+        function nextStep() { if (currentStep < totalSteps - 1) { currentStep++; updateUI(); } }
+        function prevStep() { if (currentStep > 0) { currentStep--; updateUI(); } }
+
+        updateUI();
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowRight') nextStep();
+            if(e.key === 'ArrowLeft') prevStep();
+        });
+
+        // --- Panels ---
+        const overlay = document.getElementById('overlay');
+        const dictPanel = document.getElementById('dict-panel');
+        const wbPanel = document.getElementById('whiteboard-panel');
+
+        function openDictionary(word, def, ex, prompt) {
+            document.getElementById('dict-word').innerText = word;
+            document.getElementById('dict-def').innerText = def;
+            document.getElementById('dict-ex').innerText = `"${ex}"`;
+            document.getElementById('dict-prompt').innerText = prompt;
+            wbPanel.classList.remove('open');
+            dictPanel.classList.add('open');
+            overlay.classList.add('active');
+        }
+
+        function toggleWhiteboard() {
+            dictPanel.classList.remove('open');
+            wbPanel.classList.add('open');
+            overlay.classList.add('active');
+        }
+
+        function closePanels() {
+            dictPanel.classList.remove('open');
+            wbPanel.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+
+        // --- Grammar Sandboxes ---
+
+        // Present Simple (Step 9)
+        function updatePresent(subject, aux) {
+            document.querySelectorAll('.present-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('ps-subj').innerText = subject;
+            
+            const auxSpan = document.getElementById('ps-aux');
+            auxSpan.innerText = aux;
+            auxSpan.classList.remove('border-gray-500', 'text-gray-500');
+            auxSpan.classList.add('border-netflixRed', 'text-netflixRed');
+            
+            const explanation = document.getElementById('ps-explanation');
+            if(aux === "doesn't") {
+                explanation.innerHTML = `Because the subject is <strong class="text-white">${subject}</strong> (He/She/It), we MUST use <strong class="text-netflixRed text-3xl">doesn't</strong>. Notice the verb "share" has no 's'!`;
+            } else {
+                explanation.innerHTML = `Because the subject is <strong class="text-white">${subject}</strong>, we simply use <strong class="text-netflixRed text-3xl">don't</strong>.`;
+            }
+            
+            // Pulse animation
+            auxSpan.style.transform = 'scale(1.1)';
+            setTimeout(() => auxSpan.style.transform = 'scale(1)', 200);
+        }
+
+        // Past Continuous (Step 12)
+        let pcCurrentSubj = "___";
+        let pcCurrentAux = "___";
+        let pcCurrentVerb = "___";
+
+        function updatePastSubj(subj, aux) {
+            document.querySelectorAll('.past-subj-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            pcCurrentSubj = subj;
+            pcCurrentAux = aux;
+            renderPastCont();
+        }
+
+        function updatePastVerb(verb) {
+            document.querySelectorAll('.past-verb-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            pcCurrentVerb = verb;
+            renderPastCont();
+        }
+
+        function renderPastCont() {
+            document.getElementById('pc-subj').innerText = pcCurrentSubj;
+            
+            const auxSpan = document.getElementById('pc-aux');
+            auxSpan.innerText = pcCurrentAux;
+            if(pcCurrentAux !== "___") {
+                auxSpan.classList.remove('border-gray-500', 'text-gray-500');
+                auxSpan.classList.add('border-white', 'text-white');
+            }
+
+            const verbSpan = document.getElementById('pc-verb');
+            if(pcCurrentVerb !== "___") {
+                document.getElementById('pc-ing').innerText = "ing";
+                document.getElementById('pc-ing').classList.replace('bg-gray-700', 'bg-netflixRed');
+                verbSpan.innerHTML = `${pcCurrentVerb}<span class="text-white font-black bg-netflixRed px-3 py-1 rounded-xl ml-2 text-3xl transition-colors duration-300">ing</span>`;
+                verbSpan.classList.remove('border-gray-500', 'text-gray-500');
+                verbSpan.classList.add('border-netflixRed', 'text-netflixRed');
+            }
+
+            const explanation = document.getElementById('pc-explanation');
+            const container = document.getElementById('pc-expl-container');
+            if(pcCurrentSubj !== "___" && pcCurrentVerb !== "___") {
+                explanation.innerHTML = `Correct! <strong class="text-white">${pcCurrentSubj} ${pcCurrentAux}</strong> + <strong class="text-netflixRed">${pcCurrentVerb}-ing</strong>. This action was happening dynamically in the past!`;
+                container.classList.add('border-netflixRed');
+                container.classList.remove('border-gray-700');
+                
+                // Pulse animation
+                verbSpan.style.transform = 'scale(1.1)';
+                setTimeout(() => verbSpan.style.transform = 'scale(1)', 200);
+            } else {
+                explanation.innerHTML = "Keep building... select both a subject and an action.";
+            }
+        }
+
+
+        // --- Interactive Logic ---
+        function checkComp(el, isCorrect, id=1) {
+            const feedback = document.getElementById('comp-feedback-' + id);
+            el.parentElement.querySelectorAll('.glass-panel').forEach(p => p.style.borderColor = 'rgba(255,255,255,0.08)');
+            
+            if(isCorrect) {
+                el.style.borderColor = '#2b9348';
+                feedback.innerText = "Correct! Spot on.";
+                feedback.style.color = '#2b9348';
+            } else {
+                el.style.borderColor = '#E50914';
+                feedback.innerText = "Watch again. That's not right.";
+                feedback.style.color = '#E50914';
+            }
+        }
+
+        function moveWord(element, dropzoneId, wordbankId) {
+            const dropzone = document.getElementById(dropzoneId);
+            const wordbank = document.getElementById(wordbankId);
+            dropzone.classList.remove('correct', 'incorrect');
+            if (element.parentElement.id === wordbankId) dropzone.appendChild(element);
+            else wordbank.appendChild(element);
+        }
+
+        function checkSentenceBuilder(dropzoneId, correctArray) {
+            const dropzone = document.getElementById(dropzoneId);
+            const words = Array.from(dropzone.children).map(child => child.innerText);
+            const feedback = document.getElementById('sb-feedback-' + dropzoneId.split('-')[1]);
+            feedback.classList.remove('hidden');
+
+            if (words.length !== correctArray.length) {
+                dropzone.className = 'sb-dropzone incorrect mb-10';
+                feedback.innerText = "You must use ALL the blocks!";
+                feedback.className = "text-center mt-6 text-netflixRed font-bold text-2xl";
+                return;
+            }
+
+            if (words.every((val, i) => val === correctArray[i])) {
+                dropzone.className = 'sb-dropzone correct mb-10';
+                feedback.innerText = "Excellent Syntax!";
+                feedback.className = "text-center mt-6 text-success font-bold text-2xl";
+            } else {
+                dropzone.className = 'sb-dropzone incorrect mb-10';
+                feedback.innerText = "Wrong order. Please try again.";
+                feedback.className = "text-center mt-6 text-netflixRed font-bold text-2xl";
+            }
+        }
+
+        function checkError(element, isActualError, correctWord) {
+            element.parentElement.querySelectorAll('span').forEach(s => s.className = '');
+            if(isActualError) {
+                element.classList.add('wrong-clicked');
+                element.innerText = correctWord;
+                document.getElementById('error-feedback-1').innerText = "Correct! We use verb-ING for Past Continuous.";
+                document.getElementById('error-feedback-1').style.color = "#2b9348";
+                document.getElementById('hub-after-error').classList.remove('hidden');
+            } else {
+                element.classList.add('correct-clicked');
+                document.getElementById('error-feedback-1').innerText = "That word is grammatically correct. Keep searching.";
+                document.getElementById('error-feedback-1').style.color = "#E50914";
+            }
+        }
+
+        function checkFact(btn, isTrueClicked) {
+            const feedback = document.getElementById('fact-feedback');
+            if (!isTrueClicked) {
+                feedback.innerText = "Correct! It's False. Joey ate Sarah's dessert when she wasn't looking!";
+                feedback.style.color = "#2b9348";
+            } else {
+                feedback.innerText = "False! Remember what happened when Sarah went to answer her phone?";
+                feedback.style.color = "#E50914";
+            }
+        }
+
+        // Sandbox Logic (Fill in the blanks)
+        let selectedWordBtn = null;
+        function selectWord(btn) {
+            if(btn.classList.contains('used')) return;
+            document.querySelectorAll('.sandbox-word').forEach(w => w.style.borderColor = 'transparent');
+            selectedWordBtn = btn;
+            btn.style.border = '2px solid #FFF';
+        }
+
+        function selectSlot(slot) {
+            if(!selectedWordBtn) {
+                if(slot.innerText !== '___') {
+                    document.querySelectorAll('.sandbox-word').forEach(w => {
+                        if(w.innerText === slot.innerText) {
+                            w.classList.remove('used');
+                            w.style.opacity = '1';
+                        }
+                    });
+                    slot.innerText = '___';
+                    slot.classList.remove('filled');
+                    slot.style.color = '#FFF';
+                }
+                return;
+            }
+            slot.innerText = selectedWordBtn.innerText;
+            slot.classList.add('filled');
+            selectedWordBtn.classList.add('used');
+            selectedWordBtn.style.border = '2px solid transparent';
+            selectedWordBtn.style.opacity = '0.2';
+            selectedWordBtn = null;
+        }
+
+        function checkSandbox() {
+            const slots = document.querySelectorAll('.sandbox-slot');
+            const feedback = document.getElementById('sandbox-feedback');
+            let allCorrect = true; let allFilled = true;
+
+            slots.forEach(slot => {
+                if(slot.innerText === '___') allFilled = false;
+                else if(slot.innerText !== slot.getAttribute('data-correct')) { allCorrect = false; slot.style.color = '#E50914'; slot.style.borderColor = '#E50914'; }
+                else { slot.style.color = '#2b9348'; slot.style.borderColor = '#2b9348'; }
+            });
+
+            feedback.classList.remove('hidden');
+            if(!allFilled) { feedback.innerText = "Please fill in all the blanks first."; feedback.className = "text-center mt-8 text-gray-400 font-bold text-2xl h-10"; }
+            else if(allCorrect) { feedback.innerText = "Perfect! You nailed the grammar."; feedback.className = "text-center mt-8 text-success font-bold text-2xl h-10"; }
+            else { feedback.innerText = "Not quite. Check the red slots and try again!"; feedback.className = "text-center mt-8 text-netflixRed font-bold text-2xl h-10"; }
+        }
+
+        // --- Whiteboard Features ---
+        function addNoteTimestamp() {
+            const textarea = document.getElementById('whiteboard-textarea');
+            const sceneNum = currentStep + 1;
+            const tag = `\n[ --- SCENE ${sceneNum} --- ]\n> `;
+            textarea.value += tag;
+            textarea.focus();
+        }
+
+        function clearWhiteboard() {
+            const textarea = document.getElementById('whiteboard-textarea');
+            if(textarea.value.trim() === '') return;
+            
+            if(confirm("Are you sure you want to delete all notes?")) {
+                textarea.value = '';
+            }
+        }
+
+        function downloadNotes() {
+            const text = document.getElementById('whiteboard-textarea').value;
+            if(!text.trim()) {
+                alert("Your notes are empty! Write something before saving.");
+                return;
+            }
+            
+            // Create a Blob containing the text data
+            const blob = new Blob([text], { type: 'text/plain' });
+            const anchor = document.createElement('a');
+            
+            // Format filename with current date
+            const dateStr = new Date().toISOString().split('T')[0];
+            anchor.download = `WOLFLIX_Notes_${dateStr}.txt`;
+            
+            anchor.href = window.URL.createObjectURL(blob);
+            anchor.target = '_blank';
+            anchor.style.display = 'none';
+            
+            // Trigger download
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
+    </script>
+</body>
+</html>
